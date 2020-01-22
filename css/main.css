@@ -1,0 +1,39 @@
+.board {
+    margin: auto;
+    table-layout: fixed;
+    width: 400px;
+    height: 400px;
+    margin-bottom: 30px;
+}
+
+.header {
+    text-align: center;
+    margin: 20px 20px;
+}
+
+.cell {
+    font-size: 15px;
+    text-align: center;
+    height: 20px;
+    width: 20px;
+    background-color: lightslategrey;
+    padding: 0;
+}
+
+.best-score {
+    text-align: center;
+    margin: auto;
+    border: 1px solid;
+}
+
+.best-score td {
+    border: 1px solid;
+}
+
+/* Helper classes */
+
+.reveal {
+    background-color: lavender;
+    border-color: lavender;
+    opacity: 0.75;
+}
