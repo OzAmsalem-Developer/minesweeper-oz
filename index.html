@@ -6,22 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
     <title>Mine sweeper</title>
 </head>
 
-<body onload="init()">
-    <div class="header">
-        <div class="timer"> <span>0</span></div>
-        <button onClick="changeLevel(4, 2)" class="level">Easy</button>
-        <button onClick="changeLevel(8, 12)" class="level">Medium</button>
-        <button onClick="changeLevel(12, 30)" class="level">Hard</button>
-        <button onClick="useHint()" class="hint">Hint</button>
-        <button onClick="showSafeClick()" class="safe-click">Safe Click (<span></span>)</button>
-        <span class="smiley" onclick="init()">🙂</span>
-        <span class="lives">❤️❤️❤️</span>
-    </div>
 
+<body onload="init()">
+    <button onClick="changeTheme(this)" class="theme myButton">Dark Mode</button>
+    <div class="header">
+        <div class="smiley" onclick="init()"></div>
+        <div class="level">
+            <button onClick="changeLevel(4, 2)" class="myButton">Easy</button>
+            <button onClick="changeLevel(8, 12)" class="myButton">Medium</button>
+            <button onClick="changeLevel(12, 30)" class="myButton">Hard</button>
+        </div>
+    </div>
+    
     <div class="board-container"></div>
+
+    <div class="footer">
+        <span class="lives"></span>
+        <span class="timer light-mode-timer"> <span>0</span>s</span>
+    </div>
+    <div class="menu">
+        <button onClick="useHint()" class="hint myButton">Hint (<span></span>)</button>
+        <button onClick="showSafeClick()" class="safe-click myButton">Safe Click (<span></span>)</button>
+        <button onClick="switchMode(this)" class="mode myButton">Switch to Manual</button>
+        <button onClick="stepBack()" class="undo myButton">UNDO</button>
+    </div>
+    
+
 
     <table class="best-score">
         <thead>

@@ -1,21 +1,26 @@
 'use strict';
 
 function renderBoard(board, selector) {
-    let strHTML = '<table class="board" border="1"><tbody>';
+    let strHTML = '<table class="board" ><tbody>';
     for (let i = 0; i < board.length; i++) {
         strHTML += '<tr>';
         for (let j = 0; j < board[0].length; j++) {
+            let cell = board[i][j];
             let className = `cell cell${i}-${j}`;
-            let cell = gBoard[i][j];
-            strHTML += `<td oncontextmenu="cellFlagged(this, ${i} , ${j});return false;" onclick="cellClicked(this, ${i} , ${j})" class="${className}">`;
-            // strHTML += (cell.isMined) ? MINE : cell.minedNegsCount;     //for debug
+            className += (gGame.lightTheme) ? ' cell-light' : ' cell-dark';
+            if (cell.isOpen) className += ' clicked';
+            strHTML += `<td onmouseover="placeMinesManually(this)" onmouseout="hideMine(this)"                             oncontextmenu="cellFlagged(this, ${i} , ${j});return false;" 
+            onclick="cellClicked(this, ${i} , ${j})" class="${className}">`;
+            if (cell.isFlagged) strHTML += FLAG;
+            if (cell.isOpen && cell.minedNegsCount) strHTML += cell.minedNegsCount;
             strHTML += '</td>';
         }
-        strHTML += '</tr>'
+        strHTML += '</tr>';
     }
     strHTML += '</tbody></table>';
     let elContainer = document.querySelector(selector);
     elContainer.innerHTML = strHTML;
+    setColors();
 }
 
 function getRandomIntInclusive(min, max) {
@@ -45,17 +50,31 @@ function getCellColor(cellContent) {
             return 'red';
         case 4:
             return 'orange';
-        default: return 'black';
+        case 5:
+            return 'orangered';
+        case 6:
+            return 'darkred';
+        default: return 'purple';
+    }
+}
+
+function setColors() {
+    for (let i = 0; i < gBoard.length; i++) {
+        for (let j = 0; j < gBoard.length; j++) {
+            let cell = (gBoard[i][j]);
+            let elCell = document.querySelector('.' + getClassName({ i: i, j: j }));
+            if (cell.isOpen && cell.minedNegsCount > 0) elCell.style.color = getCellColor(cell.minedNegsCount);
+        }
     }
 }
 
 function startTimer() {
-    gGame.secsPassed += 1;
-    document.querySelector('.timer span').innerText = gGame.secsPassed;
+    gSecsPassed += 1;
+    document.querySelector('.timer span').innerText = gSecsPassed;
 }
 
 // Returns the class name for a specific cell
 function getClassName(location) {
-    var cellClass = 'cell' + location.i + '-' + location.j;
+    let cellClass = 'cell' + location.i + '-' + location.j;
     return cellClass;
 }
