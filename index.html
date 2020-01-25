@@ -12,7 +12,7 @@
 
 
 <body onload="init()">
-    <button onClick="changeTheme(this)" class="theme myButton">Dark Mode</button>
+    <button onClick="changeTheme(this)" class="myButton theme">Dark Mode</button>
     <div class="header">
         <div class="smiley" onclick="init()"></div>
         <div class="level">
@@ -21,18 +21,19 @@
             <button onClick="changeLevel(12, 30)" class="myButton">Hard</button>
         </div>
     </div>
-    
-    <div class="board-container"></div>
 
-    <div class="footer">
-        <span class="lives"></span>
-        <span class="timer light-mode-timer"> <span>0</span>s</span>
-    </div>
     <div class="menu">
         <button onClick="useHint()" class="hint myButton">Hint (<span></span>)</button>
         <button onClick="showSafeClick()" class="safe-click myButton">Safe Click (<span></span>)</button>
         <button onClick="switchMode(this)" class="mode myButton">Switch to Manual</button>
+    </div>
+    
+    <div class="board-container"></div>
+    
+    <div class="footer">
+        <span class="lives"></span>
         <button onClick="stepBack()" class="undo myButton">UNDO</button>
+        <span class="timer light-mode-timer"> <span>00:00:00</span></span>
     </div>
     
 

@@ -1,5 +1,10 @@
+::selection {
+    color: none;
+    background: none;
+}
+
 body {
-    background-color: #bbd1d8;
+    background-color: #fffaae;
 }
 
 .board {
@@ -15,7 +20,7 @@ body {
 
 .menu {
     text-align: center;
-    margin: 20px 20px;
+    margin: 7px 7px;
 }
 
 .cell-light {
@@ -25,6 +30,10 @@ body {
     width: 20px;
     background: #bbbbbb;
     border: 2px solid #ccc;
+}
+
+.cell {
+    font-size: 18px;
 }
 
 .cell:hover {
@@ -56,11 +65,11 @@ body {
     outline: none;
 }
 
-
 .best-score {
     text-align: center;
     margin: auto;
     font-family: monospace;
+    margin-top: 40px;
 }
 
 .best-score td {
@@ -75,15 +84,19 @@ body {
 
 .header {
     text-align: center;
-    margin-bottom: 7px;
+    display: inline;
+    margin: 50px 0 4px 0;
 }
 
 .smiley {
+    text-align: center;
     border: silver 1px solid;
     border-radius: 3px;
-    display: inline-block;
     font-size: 20px;
     padding: 6px;
+    display: block;
+    width: 28px;
+    margin: auto;
     background-color: #ededed;
     margin-bottom: 7px;
 }
@@ -98,15 +111,8 @@ body {
 }
 
 .lives {
-    margin-right: 120px;
     position: absolute;
-    left: 480px;
-}
-
-.light-mode-timer {
-    margin-left: 120px;
-    position: absolute;
-    right: 480px;
+    left: 470px;
     box-shadow: inset 0px 0px 14px -3px #f2fadc;
     background: linear-gradient(to bottom, #dbe6c4 5%, #9ba892 100%);
     background-color: #dbe6c4;
@@ -117,9 +123,37 @@ body {
     font-family: Arial;
     font-size: 15px;
     font-weight: bold;
-    padding: 6px 28px;
+    width: 80px;
+    height: 24px;
+    padding-top: 5px;
     text-decoration: none;
     text-shadow: 0px 1px 0px #ced9bf;
+}
+
+
+@font-face {
+    font-family: 'digital-clock';
+    src: url('fonts/digital.regular.ttf')
+}
+
+.timer {
+    font-family: 'digital-clock';
+    font-size: 25px;
+    position: absolute;
+    right: 470px;
+    box-shadow: inset 0px 0px 14px -3px #f2fadc;
+    background: linear-gradient(to bottom, #dbe6c4 5%, #9ba892 100%);
+    background-color: #dbe6c4;
+    border-radius: 6px;
+    border: 1px solid #b2b8ad;
+    display: inline-block;
+    color: #757d6f;
+    font-weight: bold;
+    padding: 2px 4px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #ced9bf;
+    width: 80px;
+    height: 24px;
 }
 
 /* Helper classes */
@@ -136,23 +170,62 @@ body {
 
 .reveal {
     background-color: springgreen;
-    border-color: springgreen;
     opacity: 0.75;
 }
 
 .on-placing-hover {
     cursor: pointer;
     background-color: lightcoral;
+    opacity: 0.75;
+}
+
+.on-hint-hover {
+    cursor: pointer;
+    background-color: springgreen;
+    opacity: 0.75;
 }
 
 .mine-placed {
     cursor: default;
-    background-color: lightcoral;
+    background-color: springgreen;
 }
 
 .mine-placed:before {
     content: "💥";
 }
+
+.x-overlay {
+    position: relative;
+}
+
+.x-overlay:after {
+    position: absolute;
+    top: 25%;
+    bottom: 0;
+    left: 0;
+    right: 5px;
+    color: #ff0000;
+    text-align: center;
+}
+
+.x-overlay:after {
+    content: '\d7';
+    font-size: 55px;
+    font-weight: 100;
+    line-height: 18px;
+    opacity: 1.9;
+}
+
+.x-overlay-easy:after {
+    top: 42%;
+}
+
+.x-overlay-medium:after {
+    top: 30%;
+}
+
+/* (TO DO:) I realized jusy now that I dont need all the code copies, just change particular element 
+by add another class to him and "run over" the default class like above */
 
 /* btn generator */
 
@@ -183,46 +256,33 @@ body {
     top: 1px;
 }
 
-.dark-mode-btn {
-	box-shadow:inset 0px 1px 0px 0px #ffffff;
-	background:linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
-	background-color:#ffffff;
-	border-radius:6px;
-	border:1px solid #dcdcdc;
-	display:inline-block;
-	cursor:pointer;
-	color:#666666;
-	font-family:Arial;
-	font-size:15px;
-	font-weight:bold;
-	padding:6px 24px;
-	text-decoration:none;
-	text-shadow:0px 1px 0px #ffffff;
-}
-.dark-mode-btn:hover {
-	background:linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
-	background-color:#f6f6f6;
-}
-.dark-mode-btn:active {
-    position:relative;
-	top:1px;
+.myButton:focus {
+    outline: none;
 }
 
-.dark-mode-timer {
-    margin-left: 120px;
+.dark-mode-btn {
+    box-shadow: inset 0px 1px 0px 0px #ffffff;
+    background: linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
+    background-color: #ffffff;
+    border: 1px solid #dcdcdc;
+    color: #666666;
+    text-shadow: 0px 1px 0px #ffffff;
+}
+
+.dark-mode-btn:hover {
+    background: linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
+    background-color: #f6f6f6;
+}
+
+/* The theme button itself */
+
+
+.theme {
     position: absolute;
-    right: 480px;
-	box-shadow:inset 0px 1px 0px 0px #ffffff;
-	background:linear-gradient(to bottom, #ffffff 5%, #f6f6f6 100%);
-	background-color:#ffffff;
-	border-radius:6px;
-	border:1px solid #dcdcdc;
+}
+
+.theme:active {
     display: inline-block;
-    color:#666666;
-    font-family: Arial;
-    font-size: 15px;
-    font-weight: bold;
-    padding: 6px 28px;
-    text-decoration: none;
-    text-shadow:0px 1px 0px #ffffff;
+    position: absolute;
+    top: 8px;
 }

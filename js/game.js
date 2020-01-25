@@ -12,6 +12,9 @@ var gTimerIvl;
 var gOnProcces;
 var gMinesToPlace;
 var gSecsPassed = 0;
+var gIsLightMode = true;
+var gIsGameOn; //Exclude from gGame for UNDO purposes
+
 var gGame = {
     isOn: false,
     shownCount: 0,
@@ -21,19 +24,17 @@ var gGame = {
     lives: 3,
     finds: 3,
     isManualMode: false,
-    isPlacing: false,
-    lightTheme: true
+    isPlacing: false
 }
 var gLevel = {
     SIZE: 8,
     MINES: 12
 };
+// Start with dark mode
+changeTheme(document.querySelector('.theme'));
 
 function init() {
-    // switchMode is also using resetGame
-    // (Thats why this 2 lines here)
     gGame.isManualMode = false;
-    document.querySelector('.mode').innerText = 'Switch to manual';
     // Left of game settings to reset
     resetGame();
 }
@@ -74,6 +75,8 @@ function minedNegsCountForEveryone() {
     for (let i = 0; i < gBoard.length; i++) {
         for (let j = 0; j < gBoard[0].length; j++) {
             let cellPos = { i: i, j: j }
+            let cell = gBoard[i][j];
+            if(cell.isMined) continue;
             negsMinesCount(cellPos);
         }
     }
@@ -82,12 +85,13 @@ function minedNegsCountForEveryone() {
 // Handle right click
 function cellFlagged(elCell, posI, posJ) {
     let cell = gBoard[posI][posJ];
-    if (!gGame.isOn || cell.isOpen) return;
+    if (!gIsGameOn || cell.isOpen || gOnProcces) return;
 
-    if (gOnProcces) return;
     if (gSecsPassed === 0 && gGame.shownCount === 0 && gGame.flaggedCount === 0) {
-        //First click
+        //First click is a flag? place mines, count and start timer
         gTimerIvl = setInterval(startTimer, 1000);
+        placeMines(gLevel.MINES, { i: posI, j: posJ });
+        minedNegsCountForEveryone();
     }
     if (!cell.isFlagged) {
         //Model
@@ -120,8 +124,10 @@ function changeLevel(size, numOfMines) {
 
 function gameOver() {
     clearInterval(gTimerIvl);
-    gGame.isOn = false;
+    gIsGameOn = false;
+    // Not updating the Model here in order to enable UNDO
     showAllMines();
+    checkUserFlags();
     document.querySelector('.smiley').innerText = DEAD;
 }
 
@@ -129,14 +135,27 @@ function showAllMines() {
     for (let i = 0; i < gBoard.length; i++) {
         for (let j = 0; j < gBoard[0].length; j++) {
             let cell = gBoard[i][j];
-            if (cell.isMined) {
+            if (cell.isMined && !cell.isFlagged) {
                 let location = { i: i, j: j }
                 let elCell = document.querySelector('.' + getClassName(location));
-                // Model
-                cell.isOpen = true;
+                // Not updating the Model here in order to enable UNDO
                 // DOM
                 elCell.innerText = MINE;
             }
+        }
+    }
+}
+
+function checkUserFlags() {
+    for (let i = 0; i < gBoard.length; i++) {
+        for (let j = 0; j < gBoard[0].length; j++) {
+            let cell = gBoard[i][j];
+            if (!cell.isFlagged) continue;
+                let location = { i: i, j: j }
+                let elCell = document.querySelector('.' + getClassName(location));
+            if(!cell.isMined) elCell.classList.add('x-overlay');
+            if(gLevel.SIZE === 4) elCell.classList.add('x-overlay-easy');
+            if(gLevel.SIZE === 8) elCell.classList.add('x-overlay-medium');
         }
     }
 }
@@ -152,14 +171,14 @@ function onUserWin() {
     let bestScore = +localStorage.getItem(level)
     if (bestScore > gSecsPassed || !bestScore) localStorage.setItem(level, gSecsPassed);
     clearInterval(gTimerIvl);
-    gGame.isOn = false;
+    gIsGameOn = false;
     document.querySelector('.smiley').innerText = WIN;
     renderBestScores();
     saveStep();
 }
 
 function useHint() {
-    if (!gGame.isOn || gOnProcces) return;
+    if (!gIsGameOn || gOnProcces) return;
     if (!gGame.hintsCount) {
         alert('You have no more hints');
         gGame.hintMode = false;
@@ -220,11 +239,13 @@ function renderBestScores() {
 }
 
 function showSafeClick() {
-    if (gOnProcces || !gGame.isOn) return;
+    if (gOnProcces || !gIsGameOn) return;
     if (!gGame.finds) {
         alert('No more safe clicks');
         return;
     }
+    // if there is no more safe cells, bye
+    if (gGame.shownCount + gLevel.MINES === gLevel.SIZE ** 2) return;
     let i = getRandomIntInclusive(0, gBoard.length - 1);
     let j = getRandomIntInclusive(0, gBoard.length - 1);
     let safeCell = gBoard[i][j];
@@ -261,20 +282,46 @@ function switchMode(elBtn) {
     }
 }
 
-function placeMinesManually(elCell) { //(On mouseover)
-    if (!gGame.isManualMode || !gGame.isPlacing) return;
-    if (gMinesToPlace === gLevel.MINES) return;
-    elCell.classList.add('on-placing-hover');
+function onMouseOver(elCell, posI, posJ) { //(On mouseover)
+    if (gGame.isManualMode && gGame.isPlacing) {
+        if (gMinesToPlace === gLevel.MINES) return;
+        elCell.classList.add('on-placing-hover');
+    } if (gGame.hintMode) {
+        if (gGame.shownCount === 0 && !gGame.isManualMode) {
+            gGame.hintMode = false;
+            return; //Not available on first click
+        }
+        handleNegsOnHint(posI, posJ, false);
+    }
 }
 
-function hideMine(elCell) {  //On mouseout
-    if (!gGame.isManualMode || !gGame.isPlacing) return;
-    elCell.classList.remove('on-placing-hover');
-    if (gMinesToPlace === gLevel.MINES) gGame.isPlacing = false;
+function onMouseOut(elCell, posI, posJ) {  //On mouseout
+    if (gGame.isManualMode && gGame.isPlacing) {
+        elCell.classList.remove('on-placing-hover');
+        if (gMinesToPlace === gLevel.MINES) gGame.isPlacing = false;
+    } if (gGame.hintMode) {
+        if (gGame.shownCount === 0 && !gGame.isManualMode) {
+            gGame.hintMode = false;
+            return; //Not available on first click
+        }
+        handleNegsOnHint(posI, posJ, true);
+    }
+}
+
+function handleNegsOnHint(posI, posJ, isMarked) {
+    for (let i = posI - 1; i <= posI + 1; i++) {
+        if (i < 0 || i >= gBoard.length) continue;
+        for (let j = posJ - 1; j <= posJ + 1; j++) {
+            if (j < 0 || j >= gBoard[0].length) continue;
+            let elCell = document.querySelector('.' + getClassName({ i: i, j: j }));
+            if (isMarked) elCell.classList.remove('on-hint-hover');
+            else elCell.classList.add('on-hint-hover');
+        }
+    }
 }
 
 function resetGame() {
-    gGame.isOn = true;
+    gIsGameOn = true;
     gGame.shownCount = 0;
     gGame.flaggedCount = 0;
     gSecsPassed = 0;
@@ -288,24 +335,31 @@ function resetGame() {
     gCurrStep = 0;
 
     clearInterval(gTimerIvl);
-    document.querySelector('.timer span').innerText = gSecsPassed;
+    document.querySelector('.timer span').innerText = '00:00:00';
     document.querySelector('.smiley').innerText = REGULAR;
     document.querySelector('.lives').innerText = LIVE + LIVE + LIVE;
     document.querySelector('.safe-click span').innerText = gGame.finds;
     document.querySelector('.hint span').innerText = gGame.hintsCount;
+    document.querySelector('.mode').innerText = 'Switch to manual';
     renderBestScores();
 }
 
 function stepBack() {
-    if (!gGame.isOn) gTimerIvl = setInterval(startTimer, 1000);
-    if (!gGameSteps[gCurrStep - 1]) return; //No more steps back? return.
+    // Step back from game over? the timer start again
+    if (!gIsGameOn) {
+        gTimerIvl = setInterval(startTimer, 1000);
+        gIsGameOn = true;
+    } 
+    if (!gGameSteps[gCurrStep - 1]) return; //No more steps back? bye.
     // Model
     gGame = gGameSteps[gCurrStep - 1].game;
     gBoard = gGameSteps[gCurrStep - 1].board;
+    // Dont remember hintMode
+    gGame.hintMode = false;
     // DOM
     // Render prev step board
     renderBoard(gBoard, '.board-container');
-    // Render lives hints and finds
+    // Render lives, hints and finds
     let elLives = document.querySelector('.lives');
     if (gGame.lives === 3) elLives.innerText = LIVE + LIVE + LIVE;
     else if (gGame.lives === 2) elLives.innerText = LIVE + LIVE;
@@ -337,48 +391,44 @@ function saveStep() {
 }
 
 function changeTheme(elBtn) {
-    if (gGame.lightTheme) {
+    if (gIsLightMode) {
         // Switch to dark Mode
         let btns = document.querySelectorAll('button');
         btns.forEach(function (btn) {
-            btn.classList.remove('myButton');
             btn.classList.add('dark-mode-btn');
         });
 
         document.querySelector('body').style.backgroundColor = '#333333';
-        document.querySelector('.timer').classList.remove('light-mode-timer');
-        document.querySelector('.timer').classList.add('dark-mode-timer');
         document.querySelector('.best-score').style.color = '#f2fadc';
+        document.querySelector('.timer').classList.add('dark-mode-btn');
+        document.querySelector('.lives').classList.add('dark-mode-btn');
         let cells = document.querySelectorAll('.cell');
         cells.forEach(function (cell) {
-            // if(!cell.classList.contains('clicked')) {
-                cell.classList.remove('cell-light');
-                cell.classList.add('cell-dark');
-            // } 
+            cell.classList.remove('cell-light');
+            cell.classList.add('cell-dark');
         });
 
         elBtn.innerText = 'Light Mode';
-        gGame.lightTheme = false;
+        gIsLightMode = false;
     } else {
         // Switch to light Mode
         let btns = document.querySelectorAll('button');
         btns.forEach(function (btn) {
-            btn.classList.add('myButton');
+            console.log(btn);
+            
             btn.classList.remove('dark-mode-btn');
         });
-        document.querySelector('body').style.backgroundColor = '#bbd1d8';
-        document.querySelector('.timer').classList.remove('dark-mode-timer');
-        document.querySelector('.timer').classList.add('light-mode-timer');
+        document.querySelector('body').style.backgroundColor = '#fffaae';
+        document.querySelector('.timer').classList.remove('dark-mode-btn');
+        document.querySelector('.lives').classList.remove('dark-mode-btn');
         document.querySelector('.best-score').style.color = 'black';
         let cells = document.querySelectorAll('.cell');
         cells.forEach(function (cell) {
-            // if(!cell.classList.contains('clicked')) {
-                cell.classList.add('cell-light');
-                cell.classList.remove('cell-dark');
-            // } 
+            cell.classList.add('cell-light');
+            cell.classList.remove('cell-dark');
         });
 
         elBtn.innerText = 'Dark Mode';
-        gGame.lightTheme = true;
+        gIsLightMode = true;
     }
 }

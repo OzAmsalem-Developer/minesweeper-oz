@@ -1,14 +1,20 @@
 'use strict';
 
 function cellClicked(elCell, posI, posJ) {
-    if (!gGame.isOn) return;
+    if (!gIsGameOn) return;
     if (gOnProcces) return;
 
     if (gGame.hintMode) {
+        if (gGame.shownCount === 0 && !gGame.isManualMode) {
+            gGame.hintMode = false;
+            return; //Not available on first click
+        }
         showNegsAndHide(posI, posJ);
         gGame.hintsCount--;
         saveStep();
+        handleNegsOnHint(posI, posJ, true)
         document.querySelector('.hint span').innerText = gGame.hintsCount;
+        gGame.hintMode = false;
         return;
     }
 
@@ -21,12 +27,15 @@ function cellClicked(elCell, posI, posJ) {
             elCell.classList.add('mine-placed');
             setTimeout(() => { //Indicate to the user that mine is placed
                 elCell.classList.remove('mine-placed');
-            }, 1000);
+            }, 650);
             if (gMinesToPlace === gLevel.MINES - 1) {
                 // Last mine to place, the game start after.
                 minedNegsCountForEveryone();
                 saveStep();
-                alert('Start Play the Game');
+                setTimeout(() => {
+                    
+                    alert('Start Play the Game');
+                }, 720);
             }
             gMinesToPlace++;
             return;
@@ -46,9 +55,7 @@ function cellClicked(elCell, posI, posJ) {
             return;
         } else {
             elCell.innerText = MINE;
-            gGame.shownCount++;
-            cell.isOpen = true;
-            elCell.classList.add('clicked');
+            //In the state of game over, nothing changes in the model in order to enable UNDO
             gameOver();
             saveStep();
             return;
@@ -68,7 +75,7 @@ function cellClicked(elCell, posI, posJ) {
         elCell.style.color = getCellColor(cell.minedNegsCount);
         elCell.classList.add('clicked');
     } else { //Empty cell found
-        // First num play click on both modes 
+        // First num play-click on both modes 
         //(manual mode can be this or this, first on regular must be empty)
         if (gSecsPassed === 0 && gGame.shownCount === 0 && gGame.flaggedCount === 0) {
             //Start timer:
